@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Bold, BookOpen, Check, CheckCheck, ChevronDown, 
 import { MarkdownEditor, type EditorApi } from './components/MarkdownEditor'
 import { MarkdownView } from './components/MarkdownView'
 import { loadLibrary, saveLibrary, exportBackup, importBackup, requestPersistentStorage, savePendingDraft, restoreLibrary, loadPreviousLibrary } from './lib/storage'
-import { parseOutline, validateLibrary, type LibraryState, type DocumentRecord, type FolderRecord } from './lib/library'
+import { openDocumentTab, parseOutline, validateLibrary, type LibraryState, type DocumentRecord, type FolderRecord } from './lib/library'
 import { getWriterAccess } from './lib/session'
 
 type Filter = 'all' | 'recent' | 'favorites' | 'trash' | string
@@ -49,7 +49,6 @@ export default function App() {
   const [findOpen, setFindOpen] = useState(false)
   const [findText, setFindText] = useState('')
   const [replaceText, setReplaceText] = useState('')
-  const [openTabs, setOpenTabs] = useState<string[]>([])
   const editor = useRef<EditorApi | null>(null)
   const source = useRef<HTMLTextAreaElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -74,7 +73,6 @@ export default function App() {
         if (disposed) return
         if (window.innerWidth < 760) data.settings.sidebarVisible = false
         readyToSave.current = true; setLibrary(data)
-        if (data.activeId) setOpenTabs([data.activeId])
       } catch (error) { if (!disposed) setLoadError(error instanceof Error ? error.message : 'Não foi possível abrir a biblioteca.') }
     }
     void boot()
@@ -137,6 +135,7 @@ export default function App() {
   const active = library?.documents.find(doc => doc.id === library.activeId)
   const documents = library?.documents ?? []
   const folders = library?.folders ?? []
+  const openTabs = library?.openTabIds ?? []
   const visibleDocs = useMemo(() => documents.filter(doc => filter === 'trash' ? !!doc.deletedAt : !doc.deletedAt && (filter === 'favorites' ? doc.favorite : ['all', 'recent'].includes(filter) || doc.folderId === filter)).sort((a, b) => b.updatedAt - a.updatedAt), [documents, filter])
   const searchResults = useMemo(() => documents.filter(doc => !doc.deletedAt && `${doc.name}\n${doc.content}`.toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR'))).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 40), [documents, query])
   const headings = useMemo(() => parseOutline(active?.content ?? ''), [active?.content])
@@ -152,10 +151,17 @@ export default function App() {
     document.querySelector('.document-tab.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   }, [active?.id, reading, focus])
   function openDoc(id: string) {
-    setLibrary(state => state ? { ...state, activeId: id } : state)
-    setOpenTabs(tabs => tabs.includes(id) ? tabs : [...tabs, id].slice(-6))
+    setLibrary(state => state ? { ...state, activeId: id, openTabIds: openDocumentTab(state.openTabIds, id) } : state)
     if (id !== active?.id) editor.current = null
     if (window.innerWidth < 760) settings({ sidebarVisible: false })
+  }
+  function closeDoc(id: string) {
+    setLibrary(state => {
+      if (!state) return state
+      const openTabIds = state.openTabIds.filter(tab => tab !== id)
+      return { ...state, openTabIds, activeId: state.activeId === id ? openTabIds.at(-1) ?? null : state.activeId }
+    })
+    if (id === active?.id) editor.current = null
   }
   function goHome() {
     setFilter('all'); setReading(false); setMenu(null); setModal(null); setFindOpen(false)
@@ -192,7 +198,7 @@ export default function App() {
   function newDocument(name = 'Sem título', content = '', folderId?: string | null) {
     const id = uid(), now = Date.now()
     update(state => ({ ...state, activeId: id, documents: [...state.documents, { id, name: fileName(name), content, folderId: folderId === undefined ? (folders.some(f => f.id === filter) ? filter : null) : folderId, favorite: false, createdAt: now, updatedAt: now, deletedAt: null }] }))
-    setOpenTabs(tabs => [...tabs, id].slice(-6)); setReading(false); editor.current = null
+    setReading(false); editor.current = null
     return id
   }
   function patchDoc(id: string, changes: Partial<DocumentRecord>) {
@@ -263,7 +269,7 @@ export default function App() {
         newDocs.push({ id: uid(), name: withoutExtension(file.name), content: await file.text(), folderId, favorite: false, createdAt: Date.now(), updatedAt: Date.now(), deletedAt: null })
       }
       update(state => ({ ...state, documents: [...state.documents, ...newDocs], folders: [...state.folders, ...newFolders], activeId: newDocs[0].id }))
-      setOpenTabs(tabs => [...tabs, newDocs[0].id].slice(-6)); setReading(false)
+      setReading(false)
       setToast(directory
         ? `${newDocs.length} documento${newDocs.length === 1 ? '' : 's'} importado${newDocs.length === 1 ? '' : 's'} e organizado${newDocs.length === 1 ? '' : 's'} em ${newFolders.length} pasta${newFolders.length === 1 ? '' : 's'}.`
         : `${newDocs.length} documento${newDocs.length === 1 ? '' : 's'} importado${newDocs.length === 1 ? '' : 's'} para sua biblioteca.`)
@@ -303,9 +309,10 @@ export default function App() {
       // Import as a separate collection; an existing library is never overwritten.
       const folderMap = new Map(imported.folders.map(folder => [folder.id, uid()]))
       const importedFolders = imported.folders.map(folder => ({ ...folder, id: folderMap.get(folder.id)!, parentId: folder.parentId ? folderMap.get(folder.parentId)! : null }))
-      const importedDocs = imported.documents.map(doc => ({ ...doc, id: uid(), folderId: doc.folderId ? folderMap.get(doc.folderId)! : null }))
+      const documentMap = new Map(imported.documents.map(doc => [doc.id, uid()]))
+      const importedDocs = imported.documents.map(doc => ({ ...doc, id: documentMap.get(doc.id)!, folderId: doc.folderId ? folderMap.get(doc.folderId)! : null }))
       if (!library) {
-        const recovered = { ...imported, documents: importedDocs, folders: importedFolders, activeId: importedDocs[0]?.id ?? null }
+        const recovered = { ...imported, documents: importedDocs, folders: importedFolders, activeId: imported.activeId ? documentMap.get(imported.activeId)! : null, openTabIds: imported.openTabIds.map(id => documentMap.get(id)!) }
         await restoreLibrary(recovered); readyToSave.current = true; setLibrary(recovered); setLoadError('')
       } else update(state => ({ ...state, folders: [...state.folders, ...importedFolders], documents: [...state.documents, ...importedDocs], activeId: importedDocs[0]?.id ?? state.activeId }))
       setToast(`Backup importado: ${importedDocs.length} documentos adicionados.`)
@@ -423,7 +430,7 @@ export default function App() {
       <header className="topbar"><div className="breadcrumbs">{(!sidebar || focus) && <IconButton label="Abrir biblioteca" onClick={() => { settings({ sidebarVisible: true, focusMode: false }) }}><PanelLeftOpen size={18} /></IconButton>}<span className="desktop-text">Meu espaço</span><ChevronRight size={13} /><span>{currentFolder?.name ?? 'Documentos'}</span><ChevronRight size={13} /><strong>{active ? withoutExtension(active.name) : 'Sua biblioteca'}</strong></div><div className="topbar-actions"><span className={`save-indicator ${saveStatus === 'error' ? 'error' : ''}`}>{saveStatus === 'saving' ? <Clock3 size={14} /> : saveStatus === 'error' ? <HelpCircle size={14} /> : <CheckCheck size={15} />}<span>{saveStatus === 'saving' ? 'Salvando…' : saveStatus === 'error' ? 'Falha ao salvar' : 'Tudo salvo'}</span></span><span className="vertical-divider" /><IconButton label={document.documentElement.dataset.theme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'} onClick={() => settings({ theme: document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark' })}>{document.documentElement.dataset.theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</IconButton><button className={`reading-button ${reading ? 'active' : ''}`} disabled={!active} onClick={() => setReading(value => !value)}>{reading ? <ArrowLeft size={16} /> : <Eye size={16} />}<span>{reading ? 'Voltar à edição' : 'Modo leitura'}</span></button></div></header>
       {otherTab && <div className="warning-banner">Esta biblioteca está aberta em outra aba. Para editar aqui, feche a outra aba e <button onClick={() => location.reload()}>recarregue</button>.</div>}
       {saveStatus === 'error' && <div className="warning-banner" role="alert">{saveError} <button onClick={() => download('lume-backup.json', exportBackup(library), 'application/json')}>Baixar backup agora</button></div>}
-      {!reading && !focus && <div className="document-tabs"><div className="tabs-scroll">{openTabs.map(id => documents.find(d => d.id === id)).filter((doc): doc is DocumentRecord => !!doc).map(doc => <div key={doc.id} className={`document-tab ${doc.id === active?.id ? 'active' : ''}`}><button onClick={() => openDoc(doc.id)}><FileText size={14} /><span>{withoutExtension(doc.name)}<small>.md</small></span></button><button className="tab-close" aria-label={`Fechar aba ${doc.name}`} onClick={() => { setOpenTabs(tabs => tabs.filter(tab => tab !== doc.id)); if (doc.id === active?.id) update(state => ({ ...state, activeId: openTabs.filter(tab => tab !== doc.id).at(-1) ?? null })) }}><X size={12} /></button></div>)}</div><IconButton label="Criar documento" onClick={() => showModal('new-doc')}><Plus size={17} /></IconButton><div className="tabs-spacer" /><span className="workspace-caption">UM POUCO DE CLAREZA, TODOS OS DIAS.</span></div>}
+      {!reading && !focus && <div className="document-tabs"><div className="tabs-scroll">{openTabs.map(id => documents.find(d => d.id === id)).filter((doc): doc is DocumentRecord => !!doc).map(doc => <div key={doc.id} className={`document-tab ${doc.id === active?.id ? 'active' : ''}`}><button onClick={() => openDoc(doc.id)}><FileText size={14} /><span>{withoutExtension(doc.name)}<small>.md</small></span></button><button className="tab-close" aria-label={`Fechar aba ${doc.name}`} onClick={() => closeDoc(doc.id)}><X size={12} /></button></div>)}</div><IconButton label="Criar documento" onClick={() => showModal('new-doc')}><Plus size={17} /></IconButton><div className="tabs-spacer" /><span className="workspace-caption">UM POUCO DE CLAREZA, TODOS OS DIAS.</span></div>}
       {active ? <>
         {!reading && <div className="editor-toolbar"><div className="mode-switch" aria-label="Modo do editor">{([{ id: 'live', icon: FileText, label: 'Escrever' }, { id: 'source', icon: Code2, label: 'Markdown' }, { id: 'split', icon: Columns2, label: 'Dividido' }] as const).map(item => <button key={item.id} className={mode === item.id ? 'active' : ''} onClick={() => settings({ editorMode: item.id })} title={item.label}><item.icon size={14} /><span>{item.label}</span></button>)}</div><span className="vertical-divider" /><div className="formatting-tools"><IconButton label="Título" disabled={!canEdit} onClick={() => command('h2', '\n## ')}><Heading2 size={17} /></IconButton><IconButton label="Negrito" disabled={!canEdit} onClick={() => command('bold', '**', '**')}><Bold size={16} /></IconButton><IconButton label="Itálico" disabled={!canEdit} onClick={() => command('italic', '*', '*')}><Italic size={16} /></IconButton><span className="vertical-divider" /><IconButton label="Inserir link" disabled={!canEdit} onClick={() => insert('[texto do link](https://exemplo.com)')}><Link2 size={16} /></IconButton><IconButton label="Inserir imagem" disabled={!canEdit} onClick={() => imageInput.current?.click()}><ImagePlus size={17} /></IconButton><IconButton label="Citação" disabled={!canEdit} onClick={() => command('quote', '\n> ')}><Quote size={16} /></IconButton><IconButton label="Lista" disabled={!canEdit} onClick={() => command('bullet-list', '\n- ')}><List size={17} /></IconButton><IconButton label="Tabela" disabled={!canEdit} onClick={() => command('table', '\n| Coluna 1 | Coluna 2 |\n| --- | --- |\n| Texto | Texto |\n')}><Table2 size={16} /></IconButton><IconButton label="Bloco de código" disabled={!canEdit} onClick={() => command('code-block', '\n```javascript\n\n```\n')}><Code2 size={17} /></IconButton></div><div className="toolbar-right"><IconButton label={focus ? 'Sair do modo foco' : 'Modo foco'} active={focus} onClick={() => settings({ focusMode: !focus })}><Maximize2 size={16} /></IconButton><IconButton label="Mostrar ou ocultar sumário" active={outlineVisible} onClick={() => setOutlineVisible(value => !value)}><ListOrdered size={18} /></IconButton></div></div>}
         {active.deletedAt && <div className="warning-banner">Este documento está na lixeira.<button onClick={() => patchDoc(active.id, { deletedAt: null })}>Restaurar documento</button><button onClick={() => showModal('delete-doc', active.id)}>Excluir permanentemente</button></div>}

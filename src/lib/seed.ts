@@ -49,6 +49,7 @@ export function createSeedLibrary(now = Date.now()): LibraryState {
     ],
     folders: [],
     activeId: 'welcome',
+    openTabIds: ['welcome'],
     settings: { ...DEFAULT_SETTINGS },
   }
 }

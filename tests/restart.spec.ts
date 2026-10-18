@@ -10,6 +10,14 @@ test('the library survives a full browser shutdown and restart', async ({ baseUR
   try {
     let page = context.pages()[0]
     await page.goto(baseURL!)
+    await expect(page.getByRole('textbox', { name: 'Conteúdo do documento' })).toBeVisible()
+    for (const name of ['Primeiro', 'Segundo']) {
+      await page.locator('input[accept=".md,.markdown,.txt"]').setInputFiles({ name: `${name}.md`, mimeType: 'text/markdown', buffer: Buffer.from(`# ${name}`) })
+      await expect(page.locator('.document-tab.active')).toContainText(name)
+    }
+    await page.locator('.document-tab').first().locator('button').first().click()
+    const expectedTabs = ['Um espaço para suas ideias.md', 'Primeiro.md', 'Segundo.md']
+    await expect(page.locator('.document-tab > button:first-child > span')).toHaveText(expectedTabs)
     await page.getByRole('button', { name: 'Markdown', exact: true }).click()
     await page.getByRole('textbox', { name: 'Conteúdo Markdown' }).fill('# Amanhã eu continuo\n\nEste texto sobrevive ao encerramento completo do navegador.')
     await expect(page.locator('.save-indicator')).toHaveText('Tudo salvo')
@@ -17,6 +25,8 @@ test('the library survives a full browser shutdown and restart', async ({ baseUR
     context = await chromium.launchPersistentContext(profile, options)
     page = context.pages()[0]
     await page.goto(baseURL!)
+    await expect(page.locator('.document-tab > button:first-child > span')).toHaveText(expectedTabs)
+    await expect(page.locator('.document-tab.active')).toContainText('Um espaço para suas ideias')
     await expect(page.getByRole('textbox', { name: 'Conteúdo Markdown' })).toHaveValue('# Amanhã eu continuo\n\nEste texto sobrevive ao encerramento completo do navegador.')
   } finally {
     await context.close()

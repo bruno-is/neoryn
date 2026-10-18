@@ -22,6 +22,7 @@ export interface LibraryState {
   documents: DocumentRecord[]
   folders: FolderRecord[]
   activeId: string | null
+  openTabIds: string[]
   settings: {
     theme: 'light' | 'dark' | 'system'
     fontSize: number
@@ -60,6 +61,10 @@ export class LibraryValidationError extends Error {
     super(message)
     this.name = 'LibraryValidationError'
   }
+}
+
+export function openDocumentTab(tabs: string[], id: string): string[] {
+  return tabs.includes(id) ? tabs : [...tabs, id].slice(-6)
 }
 
 function invalid(message: string): never {
@@ -169,6 +174,13 @@ export function validateLibrary(value: unknown): LibraryState {
   if (activeId !== null && !documents.some(document => document.id === activeId)) {
     invalid('O documento aberto não foi encontrado na biblioteca.')
   }
+  if (source.openTabIds !== undefined && (!Array.isArray(source.openTabIds) || source.openTabIds.some(id => typeof id !== 'string'))) {
+    invalid('A lista de abas abertas é inválida.')
+  }
+  const documentIds = new Set(documents.map(document => document.id))
+  const savedTabs = (source.openTabIds ?? []) as string[]
+  const existingTabs = [...new Set(savedTabs)].filter(id => documentIds.has(id)).slice(-6)
+  const openTabIds = activeId ? openDocumentTab(existingTabs, activeId) : existingTabs
   const settings = record(source.settings, 'Preferências')
   if (settings.theme !== 'light' && settings.theme !== 'dark' && settings.theme !== 'system') invalid('O tema selecionado é inválido.')
   if (settings.editorMode !== 'live' && settings.editorMode !== 'source' && settings.editorMode !== 'split') invalid('O modo do editor é inválido.')
@@ -180,6 +192,7 @@ export function validateLibrary(value: unknown): LibraryState {
     documents,
     folders,
     activeId,
+    openTabIds,
     settings: {
       theme: settings.theme as LibraryState['settings']['theme'],
       fontSize: settings.fontSize,

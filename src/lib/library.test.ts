@@ -38,6 +38,7 @@ describe('starter content', () => {
   it('retires untouched legacy samples and keeps a recoverable previous snapshot', async () => {
     const legacy = createLegacySeedLibrary(100)
     legacy.activeId = 'markdown-guide'
+    legacy.openTabIds = ['welcome', 'markdown-guide']
     await saveLibrary(legacy)
     const migrated = await loadLibrary()
     expect(migrated.documents).toEqual([legacy.documents[0]])
@@ -131,6 +132,37 @@ describe('portable backups', () => {
     const invalid = createPopulatedLibrary(100)
     invalid.settings.fontSize = Infinity
     expect(() => validateLibrary(invalid)).toThrow('fonte')
+  })
+})
+
+describe('saved document tabs', () => {
+  it('restores tab order and the active document through storage and backup', async () => {
+    const library = createPopulatedLibrary(100)
+    library.openTabIds = ['markdown-guide', 'welcome', 'workspace-guide']
+    await saveLibrary(library)
+    expect(await loadLibrary()).toEqual(library)
+    expect(importBackup(exportBackup(library))).toEqual(library)
+    library.openTabIds = ['markdown-guide', 'workspace-guide']
+    library.activeId = null
+    await saveLibrary(library)
+    expect(await loadLibrary()).toEqual(library)
+    library.openTabIds = []
+    await saveLibrary(library)
+    expect((await loadLibrary()).openTabIds).toEqual([])
+  })
+
+  it('accepts older libraries without tabs and restores their active document', () => {
+    const { openTabIds: _tabs, ...legacy } = createPopulatedLibrary(100)
+    expect(validateLibrary(legacy).openTabIds).toEqual(['welcome'])
+    expect(validateLibrary({ ...legacy, activeId: null }).openTabIds).toEqual([])
+  })
+
+  it('drops stale or duplicated tabs and keeps the active document visible', () => {
+    const library = createPopulatedLibrary(100)
+    library.openTabIds = ['markdown-guide', 'missing', 'markdown-guide']
+    expect(validateLibrary(library).openTabIds).toEqual(['markdown-guide', 'welcome'])
+    expect(() => validateLibrary({ ...library, openTabIds: 'welcome' })).toThrow('abas')
+    expect(() => validateLibrary({ ...library, openTabIds: [null] })).toThrow('abas')
   })
 })
 

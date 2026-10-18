@@ -140,6 +140,7 @@ export function createLegacySeedLibrary(now = Date.now()): LibraryState {
       { id: 'referencias', name: 'Referências', parentId: null, createdAt: now },
     ],
     activeId: 'welcome',
+    openTabIds: ['welcome'],
     settings: { ...DEFAULT_SETTINGS },
   }
 }

@@ -1,4 +1,4 @@
-import type { LibraryState } from './library'
+import { openDocumentTab, type LibraryState } from './library'
 import { createLegacySeedLibrary } from './legacySeed'
 
 /** Remove only untouched, identifiable samples, once per library. */
@@ -23,5 +23,7 @@ export function migrateStarterContent(state: LibraryState): LibraryState {
   const activeId = state.activeId && removed.has(state.activeId)
     ? documents.find(doc => doc.id === 'welcome' && !doc.deletedAt)?.id ?? null
     : state.activeId
-  return { ...state, starterContentVersion: 2, documents, folders, activeId }
+  const remainingTabs = state.openTabIds.filter(id => !removed.has(id))
+  const openTabIds = activeId ? openDocumentTab(remainingTabs, activeId) : remainingTabs
+  return { ...state, starterContentVersion: 2, documents, folders, activeId, openTabIds }
 }

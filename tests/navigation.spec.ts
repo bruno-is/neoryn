@@ -89,6 +89,46 @@ test('a blocked clipboard shows a useful error without changing the document', a
   await expect(page.getByRole('textbox', { name: 'Conteúdo do documento' }).locator('h1')).toHaveText('Um espaço para suas ideias')
 })
 
+test('open tabs, their order, selection and closed tabs survive reload', async ({ page }) => {
+  await open(page)
+  for (const name of ['Um', 'Dois', 'Três']) {
+    await page.locator('input[accept=".md,.markdown,.txt"]').setInputFiles({ name: `${name}.md`, mimeType: 'text/markdown', buffer: Buffer.from(`# ${name}`) })
+    await expect(page.locator('.document-tab.active')).toContainText(`${name}.md`)
+  }
+  const tabLabels = page.locator('.document-tab > button:first-child > span')
+  const originalOrder = ['Um espaço para suas ideias.md', 'Um.md', 'Dois.md', 'Três.md']
+  await page.locator('.document-tab').nth(1).locator('button').first().click()
+  await expect(page.locator('.save-indicator')).toHaveText('Tudo salvo')
+  await page.reload()
+  await expect(tabLabels).toHaveText(originalOrder)
+  await expect(page.locator('.document-tab.active')).toContainText('Um.md')
+  await page.getByRole('button', { name: 'Fechar aba Dois', exact: true }).click()
+  await expect(page.locator('.save-indicator')).toHaveText('Tudo salvo')
+  await page.reload()
+  const remaining = ['Um espaço para suas ideias.md', 'Um.md', 'Três.md']
+  await expect(tabLabels).toHaveText(remaining)
+  await expect(page.locator('.document-tab.active')).toContainText('Um.md')
+  await page.getByRole('button', { name: 'Lume — voltar ao início', exact: true }).click()
+  await expect(page.locator('.save-indicator')).toHaveText('Tudo salvo')
+  await page.reload()
+  await expect(page.locator('.empty-workspace')).toBeVisible()
+  await expect(tabLabels).toHaveText(remaining)
+  await page.locator('.document-tab').nth(1).locator('button').first().click()
+  await page.getByRole('button', { name: 'Fechar aba Um', exact: true }).click()
+  await expect(page.locator('.document-tab.active')).toContainText('Três.md')
+  await expect(page.locator('.save-indicator')).toHaveText('Tudo salvo')
+  await page.reload()
+  await expect(tabLabels).toHaveText(['Um espaço para suas ideias.md', 'Três.md'])
+  await expect(page.locator('.document-tab.active')).toContainText('Três.md')
+  await page.getByRole('button', { name: 'Fechar aba Três', exact: true }).click()
+  await page.getByRole('button', { name: 'Fechar aba Um espaço para suas ideias', exact: true }).click()
+  await expect(page.locator('.save-indicator')).toHaveText('Tudo salvo')
+  await page.reload()
+  await expect(page.locator('.empty-workspace')).toBeVisible()
+  await expect(tabLabels).toHaveCount(0)
+  await expect(page.locator('.document-item')).toHaveCount(4)
+})
+
 test('tabs fit at fractional zoom and still scroll horizontally when needed', async ({ page }) => {
   await open(page)
   const tabs = page.locator('.tabs-scroll')
