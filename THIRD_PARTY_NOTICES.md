@@ -1,6 +1,6 @@
 # Bibliotecas de terceiros
 
-Lume é uma implementação independente. Não inclui código, temas, fontes ou imagens extraídos de aplicações proprietárias.
+Neoryn é uma implementação independente. Não inclui código, temas, fontes ou imagens extraídos de aplicações proprietárias.
 
 As bibliotecas principais de runtime e suas licenças estão listadas abaixo. O build coleta as licenças e avisos de copyright dos pacotes de runtime instalados em `public/third-party-licenses.txt`, publicado junto do aplicativo. As versões exatas estão em `package-lock.json`.
 

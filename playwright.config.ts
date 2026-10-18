@@ -14,5 +14,8 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
   },
-  webServer: process.env.CI ? { command: 'npm run dev -- --port 4174', url: 'http://127.0.0.1:4174', reuseExistingServer: false } : undefined,
+  webServer: process.env.CI ? [
+    { command: 'npm run dev -- --port 4174', url: 'http://127.0.0.1:4174', reuseExistingServer: false },
+    ...(process.env.NEORYN_PRODUCTION_TEST ? [{ command: 'npm run preview:pages', url: 'http://127.0.0.1:4175/neoryn/', reuseExistingServer: false }] : []),
+  ] : undefined,
 })

@@ -18,7 +18,7 @@ Abra uma página em branco ou traga um arquivo **.md** que já faz parte da sua 
 
 Use **Pasta inteira** para importar uma pasta com seus arquivos e subpastas. A estrutura é mantida na biblioteca.
 
-No menu **⋯** ao lado da estrela, escolha **Copiar Markdown** para copiar o documento completo. Clique no logo **lume.** para voltar ao início.
+No menu **⋯** ao lado da estrela, escolha **Copiar Markdown** para copiar o documento completo. Clique no logo **neoryn** para voltar ao início.
 
 ## 02 · Encontre seu ritmo
 

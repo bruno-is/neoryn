@@ -1,4 +1,4 @@
-Lume — third-party software notices
+Neoryn — third-party software notices
 
 The following notices belong to installed runtime dependencies. Each package retains its own license and copyright.
 

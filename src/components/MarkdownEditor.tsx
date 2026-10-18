@@ -48,7 +48,7 @@ function isSafeUrl(url: string, image = false) {
 type MarkdownNode = { type: string; url?: string; value?: string; children?: MarkdownNode[] }
 
 // Imported HTML remains text; unsafe URLs are stripped before ProseMirror creates DOM.
-const safeMarkdown = $remark('lumeSafeMarkdown', () => () => (tree: MarkdownNode) => {
+const safeMarkdown = $remark('neorynSafeMarkdown', () => () => (tree: MarkdownNode) => {
   const visit = (node: MarkdownNode) => {
     if (node.type === 'html') node.type = 'text'
     if (node.url && !isSafeUrl(node.url, node.type === 'image')) node.url = ''
@@ -286,7 +286,7 @@ function CoreMarkdownEditor({ documentId, value, onChange, onReady, onError }: M
     instance.applyingExternal = false
   }, [documentId, value])
 
-  return <div className="lume-editor" aria-busy={loading && !error}>
+  return <div className="neoryn-editor" aria-busy={loading && !error}>
     {loading && !error && <div className="editor-loading" role="status">Preparando seu espaço de escrita…</div>}
     {error && <div className="editor-error" role="alert">{error}<br />Seu documento continua salvo. Abra o modo código para continuar.</div>}
     <div ref={root} />

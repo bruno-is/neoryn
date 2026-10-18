@@ -2,7 +2,7 @@ import { readFile, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const lock = JSON.parse(await readFile('package-lock.json', 'utf8'))
-const sections = ['Lume — third-party software notices\n\nThe following notices belong to installed runtime dependencies. Each package retains its own license and copyright.\n']
+const sections = ['Neoryn — third-party software notices\n\nThe following notices belong to installed runtime dependencies. Each package retains its own license and copyright.\n']
 for (const [path, entry] of Object.entries(lock.packages)) {
   if (!path || entry.dev) continue
   const files = await readdir(path).catch(() => [])

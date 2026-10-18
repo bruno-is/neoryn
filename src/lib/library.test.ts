@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { canMoveFolder, getFolderDescendants, parseOutline, uniqueName, validateLibrary } from './library'
 import { createSeedLibrary } from './seed'
 import { createLegacySeedLibrary } from './legacySeed'
-import { migrateStarterContent } from './starterContent'
+import { migrateBrandContent, migrateStarterContent } from './starterContent'
+import { legacyWelcome } from './legacyWelcome'
 import { exportBackup, importBackup, loadLibrary, loadPreviousLibrary, restoreLibrary, saveLibrary, savePendingDraft } from './storage'
 
 const createPopulatedLibrary = (now: number) => ({ ...createLegacySeedLibrary(now), starterContentVersion: 2 as const })
@@ -82,6 +83,51 @@ describe('starter content', () => {
     const loaded = await loadLibrary()
     expect(loaded.documents.find(doc => doc.id === 'workspace-guide')?.content).toBe('# Última edição')
     expect(loaded.folders.map(folder => folder.id)).toContain('pessoal')
+  })
+})
+
+describe('brand compatibility', () => {
+  it('rebrands only an untouched welcome and retains the original recovery snapshot', async () => {
+    const old = createSeedLibrary(100)
+    old.documents[0].content = legacyWelcome
+    await writeRawSnapshot({ format: 'lume-backup', version: 1, exportedAt: new Date(100).toISOString(), library: old })
+    const updated = await loadLibrary()
+    expect(updated).toEqual(createSeedLibrary(100))
+    expect(migrateBrandContent(updated)).toBe(updated)
+    await saveLibrary(updated)
+    expect(await loadPreviousLibrary()).toEqual(old)
+    expect(await loadLibrary()).toEqual(updated)
+  })
+
+  it.each([
+    { content: legacyWelcome + '\nMinha ideia no Lume.' },
+    { name: 'Minha introdução' },
+    { updatedAt: 200 },
+    { deletedAt: 200 },
+    { id: 'personal-document' },
+  ])('never rewrites an edited, renamed, deleted or copied welcome: %j', changes => {
+    const state = createSeedLibrary(100)
+    Object.assign(state.documents[0], { content: legacyWelcome }, changes)
+    expect(migrateBrandContent(state)).toBe(state)
+  })
+
+  it('loads old snapshots with folders, tabs, preferences, favorites, trash and emergency drafts', async () => {
+    const old = createPopulatedLibrary(100)
+    old.documents[1].deletedAt = 150
+    old.settings.theme = 'dark'
+    old.settings.fontSize = 21
+    old.openTabIds = [old.documents[0].id, old.documents[2].id]
+    const backup = JSON.stringify({ format: 'lume-backup', version: 1, exportedAt: new Date(100).toISOString(), library: old })
+    expect(importBackup(backup)).toEqual(old)
+    await writeRawSnapshot(JSON.parse(backup))
+    localStorage.setItem('lume-pending-drafts-v1', JSON.stringify({ version: 1, drafts: [{ id: old.documents[0].id, content: '# Rascunho anterior', updatedAt: 200 }] }))
+    const expected = structuredClone(old)
+    Object.assign(expected.documents[0], { content: '# Rascunho anterior', updatedAt: 200 })
+    expect(await loadLibrary()).toEqual(expected)
+    await saveLibrary(expected)
+    expect(await loadPreviousLibrary()).toEqual(old)
+    expect(localStorage.getItem('lume-pending-drafts-v1')).toBeNull()
+    expect(importBackup(exportBackup(expected))).toEqual(expected)
   })
 })
 
@@ -317,6 +363,7 @@ describe('document outline', () => {
 async function writeRawSnapshot(value: unknown): Promise<void> {
   const database = await new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open('lume-library', 1)
+    request.onupgradeneeded = () => request.result.createObjectStore('library')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })

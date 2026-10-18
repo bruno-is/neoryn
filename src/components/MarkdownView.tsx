@@ -50,7 +50,7 @@ export function safeMarkdownUrl(url: string, key?: string): string {
 let mermaidLoader: Promise<typeof import('mermaid')> | undefined
 
 function MermaidBlock({ source }: { source: string }) {
-  const id = `lume-diagram-${useId().replace(/[^a-z\d]/gi, '')}`
+  const id = `neoryn-diagram-${useId().replace(/[^a-z\d]/gi, '')}`
   const [svg, setSvg] = useState('')
   const [error, setError] = useState(false)
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme)

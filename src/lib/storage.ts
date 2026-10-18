@@ -1,9 +1,11 @@
 import { LIBRARY_LIMITS, validateLibrary, type DocumentRecord, type LibraryState } from './library'
 import { createSeedLibrary } from './seed'
-import { migrateStarterContent } from './starterContent'
+import { migrateBrandContent, migrateStarterContent } from './starterContent'
 
 export type { DocumentRecord, FolderRecord, LibraryState } from './library'
 
+// Compatibility contract: keep database, draft, backup and writer-lock identifiers.
+// Older tabs and exported snapshots must continue to share this library.
 const DATABASE_NAME = 'lume-library'
 const STORE_NAME = 'library'
 const CURRENT_KEY = 'current'
@@ -113,7 +115,7 @@ function envelope(state: LibraryState): BackupEnvelope {
 function decodeEnvelope(value: unknown): LibraryState {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('O backup não é um objeto válido.')
   const backup = value as Record<string, unknown>
-  if (backup.format !== BACKUP_FORMAT) throw new Error('Este arquivo não é um backup do Lume.')
+  if (backup.format !== BACKUP_FORMAT) throw new Error('Este arquivo não é um backup do Neoryn.')
   if (backup.version !== BACKUP_VERSION) throw new Error('A versão deste backup ainda não é compatível.')
   if (typeof backup.exportedAt !== 'string' || !Number.isFinite(Date.parse(backup.exportedAt))) throw new Error('A data do backup é inválida.')
   return validateLibrary(backup.library)
@@ -160,7 +162,7 @@ function openDatabase(): Promise<IDBDatabase> {
     request.onerror = () => reject(new LibraryStorageError('Não foi possível abrir a biblioteca local.', request.error))
     request.onblocked = () => {
       failed = true
-      reject(new LibraryStorageError('Outra aba está impedindo a abertura da biblioteca. Feche as outras abas do Lume e tente novamente.'))
+      reject(new LibraryStorageError('Outra aba está impedindo a abertura da biblioteca. Feche as outras abas do Neoryn e tente novamente.'))
     }
   })
 }
@@ -194,7 +196,7 @@ export function loadLibrary(): Promise<LibraryState> {
       return initial
     }
     try {
-      return migrateStarterContent(mergePendingDrafts(decodeEnvelope(stored)))
+      return migrateBrandContent(migrateStarterContent(mergePendingDrafts(decodeEnvelope(stored))))
     } catch (cause) {
       throw new LibraryStorageError('A biblioteca salva não pôde ser validada. Os dados originais foram preservados. Você pode recuperar a cópia anterior ou importar um backup.', cause)
     }

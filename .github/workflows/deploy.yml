@@ -1,4 +1,4 @@
-name: Publicar Lume no GitHub Pages
+name: Publicar Neoryn no GitHub Pages
 
 on:
   push:
@@ -26,6 +26,11 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          CI: 'true'
+          NEORYN_PRODUCTION_TEST: '1'
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

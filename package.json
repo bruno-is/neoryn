@@ -1,5 +1,5 @@
 {
-  "name": "lume-editor",
+  "name": "neoryn-editor",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -10,7 +10,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "preview:pages": "node scripts/serve-built.mjs"
+    "preview:pages": "node scripts/serve-built.mjs",
+    "brand:generate": "node scripts/generate-brand.mjs"
   },
   "dependencies": {
     "@codemirror/language": "6.13.1",

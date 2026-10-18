@@ -1,5 +1,20 @@
 import { openDocumentTab, type LibraryState } from './library'
 import { createLegacySeedLibrary } from './legacySeed'
+import { legacyWelcome } from './legacyWelcome'
+import { createSeedLibrary } from './seed'
+
+/** Rebrand only the exact, unedited shipped welcome; preserve all user changes. */
+export function migrateBrandContent(state: LibraryState): LibraryState {
+  const current = createSeedLibrary(0).documents[0]
+  let changed = false
+  const documents = state.documents.map(doc => {
+    if (doc.id !== current.id || doc.name !== current.name || doc.content !== legacyWelcome
+      || doc.updatedAt !== doc.createdAt || doc.deletedAt !== null) return doc
+    changed = true
+    return { ...doc, content: current.content }
+  })
+  return changed ? { ...state, documents } : state
+}
 
 /** Remove only untouched, identifiable samples, once per library. */
 export function migrateStarterContent(state: LibraryState): LibraryState {

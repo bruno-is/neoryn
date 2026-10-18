@@ -41,7 +41,7 @@ test('one introduction, clickable folder rows and logo navigation preserve the l
   const markdown = '# Minhas notas\n\nÚltimas palavras antes de voltar ao início.'
   await page.getByRole('textbox', { name: 'Conteúdo Markdown' }).fill(markdown)
   await page.getByRole('button', { name: 'Modo leitura', exact: true }).click()
-  await page.getByRole('button', { name: 'Lume — voltar ao início', exact: true }).click()
+  await page.getByRole('button', { name: 'Neoryn — voltar ao início', exact: true }).click()
   await expect(page.locator('.empty-workspace')).toBeVisible()
   await expect(page.locator('.document-item')).toHaveCount(2)
   await expect(page.locator('.app-shell')).not.toHaveClass(/reading-mode/)
@@ -66,7 +66,7 @@ test('copies complete Markdown from every editor mode, reading and another docum
     await expect(page.getByRole('status')).toHaveText('Markdown completo copiado.')
     await expect.poll(() => readClipboard(page)).toBe(markdown)
   }
-  await page.getByRole('button', { name: 'Lume — voltar ao início', exact: true }).click()
+  await page.getByRole('button', { name: 'Neoryn — voltar ao início', exact: true }).click()
   await page.locator('input[accept=".md,.markdown,.txt"]').setInputFiles({ name: 'Outro.md', mimeType: 'text/markdown', buffer: Buffer.from('# Outro') })
   await page.getByRole('button', { name: 'Opções de Um espaço para suas ideias', exact: true }).click()
   await page.getByRole('button', { name: 'Copiar Markdown', exact: true }).click()
@@ -108,7 +108,7 @@ test('open tabs, their order, selection and closed tabs survive reload', async (
   const remaining = ['Um espaço para suas ideias.md', 'Um.md', 'Três.md']
   await expect(tabLabels).toHaveText(remaining)
   await expect(page.locator('.document-tab.active')).toContainText('Um.md')
-  await page.getByRole('button', { name: 'Lume — voltar ao início', exact: true }).click()
+  await page.getByRole('button', { name: 'Neoryn — voltar ao início', exact: true }).click()
   await expect(page.locator('.save-indicator')).toHaveText('Tudo salvo')
   await page.reload()
   await expect(page.locator('.empty-workspace')).toBeVisible()

@@ -6,15 +6,20 @@ export default defineConfig({
   base: './',
   plugins: [react(), VitePWA({
     registerType: 'prompt',
-    includeAssets: ['favicon.svg'],
+    includeAssets: ['favicon.svg', 'brand/*.svg', 'icons/*.png'],
     manifest: {
-      name: 'Lume — espaço para suas ideias', short_name: 'Lume',
-      description: 'Escreva, leia e organize seus documentos Markdown.',
-      theme_color: '#F7F8FA', background_color: '#F7F8FA', display: 'standalone',
-      start_url: './', scope: './', lang: 'pt-BR',
-      icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+      name: 'Neoryn — Um espaço para suas ideias.', short_name: 'Neoryn',
+      description: 'Escreva, organize e desenvolva suas ideias em um ambiente pessoal, sem distrações.',
+      theme_color: '#0F172A', background_color: '#F8F9FC', display: 'standalone',
+      id: './', start_url: './', scope: './', lang: 'pt-BR',
+      icons: [
+        { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+        { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        { src: 'icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      ],
     },
-    workbox: { clientsClaim: true, globPatterns: ['**/*.{js,css,html,svg,woff,woff2,ttf}'], maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, navigateFallback: 'index.html' },
+    workbox: { clientsClaim: true, globPatterns: ['**/*.{js,css,html,svg,png,woff,woff2,ttf}'], maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, navigateFallback: 'index.html' },
   })],
   build: { chunkSizeWarningLimit: 1200 },
 })

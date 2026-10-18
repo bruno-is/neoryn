@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
 
 test('the library survives a full browser shutdown and restart', async ({ baseURL }) => {
-  const profile = await mkdtemp(join(tmpdir(), 'lume-restart-test-'))
+  const profile = await mkdtemp(join(tmpdir(), 'neoryn-restart-test-'))
   const options = { channel: process.env.CI ? undefined : 'msedge', headless: true, viewport: { width: 1440, height: 960 } }
   let context = await chromium.launchPersistentContext(profile, options)
   try {
@@ -31,6 +31,6 @@ test('the library survives a full browser shutdown and restart', async ({ baseUR
   } finally {
     await context.close()
     const expectedRoot = resolve(tmpdir()) + sep
-    if (resolve(profile).startsWith(expectedRoot) && profile.includes('lume-restart-test-')) await rm(profile, { recursive: true, force: true })
+    if (resolve(profile).startsWith(expectedRoot) && profile.includes('neoryn-restart-test-')) await rm(profile, { recursive: true, force: true })
   }
 })

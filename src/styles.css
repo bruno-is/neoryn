@@ -7,20 +7,22 @@
   font-weight: 400;
   color: var(--text);
   background: var(--bg);
+  --brand-primary: #7C6CFF;
+  --brand-secondary: #60A5FA;
   --font-ui: Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --font-editor: Georgia,"Times New Roman",serif;
   --font-code: "JetBrains Mono","SFMono-Regular",Consolas,monospace;
-  --bg: #F7F8FA;
+  --bg: #F8F9FC;
   --paper: #FFFFFF;
-  --sidebar: #F0F2F5;
-  --subtle: #F0F2F6;
-  --hover: #E9EDF3;
-  --selection: #E4EBFA;
-  --border: #DEE2E8;
-  --text: #252A32;
-  --muted: #626B7A;
-  --accent: #4D66AB;
-  --accent-strong: #405B9F;
+  --sidebar: #F1F3F8;
+  --subtle: #F0F2F8;
+  --hover: #E9ECF5;
+  --selection: #ECE9FC;
+  --border: #DFE3ED;
+  --text: #202638;
+  --muted: #626B7E;
+  --accent: #6250CE;
+  --accent-strong: #5140B5;
   --on-accent: #FFFFFF;
   --text-secondary: #505867;
   --control-border: #8792A4;
@@ -28,7 +30,7 @@
   --surface-raised: var(--paper);
   --accent-soft: var(--selection);
   --code-inline-bg: #EDF0F5;
-  --code-inline-text: #435D9B;
+  --code-inline-text: #6250CE;
   --code-bg: #F3F5F8;
   --quote-bg: var(--subtle);
   --selection-text: var(--text);
@@ -48,8 +50,8 @@
   --syntax-title: #4769A6;
   --syntax-variable: var(--text);
   --syntax-punctuation: var(--text-secondary);
-  --diagram-node: #E9EDF3;
-  --diagram-secondary: #E4EBFA;
+  --diagram-node: #E9ECF5;
+  --diagram-secondary: #ECE9FC;
   --diagram-tertiary: #F3F5F8;
   --overlay: #10141C66;
   --shadow: 0 12px 32px #1118271A;
@@ -61,24 +63,24 @@
 
 :root[data-theme=dark] {
   color-scheme: dark;
-  --bg: #17191D;
-  --paper: #17191D;
-  --sidebar: #14161A;
-  --subtle: #1C1F24;
-  --hover: #252A32;
-  --selection: #2B354B;
-  --border: #30343B;
-  --text: #E6E8ED;
-  --muted: #A5ACB8;
-  --accent: #93AAF5;
-  --accent-strong: #B5C7FF;
-  --on-accent: #17191D;
+  --bg: #0F172A;
+  --paper: #0F172A;
+  --sidebar: #0C1425;
+  --subtle: #162136;
+  --hover: #202638;
+  --selection: #2D2C50;
+  --border: #2A374E;
+  --text: #E5E7EB;
+  --muted: #A6B2C8;
+  --accent: #ADA2FF;
+  --accent-strong: #C5BDFF;
+  --on-accent: #0F172A;
   --text-secondary: #BFC5CF;
   --control-border: #6E7889;
-  --surface-raised: #22262D;
-  --code-inline-bg: #252A32;
-  --code-inline-text: #B5C7FF;
-  --code-bg: #1C1F24;
+  --surface-raised: #1B2940;
+  --code-inline-bg: #202638;
+  --code-inline-text: #C5BDFF;
+  --code-bg: #162136;
   --success: #91BAA0;
   --warning: #DFBC79;
   --warning-bg: #30291D;
@@ -91,9 +93,9 @@
   --syntax-string: #8CBFBA;
   --syntax-number: #D8B07E;
   --syntax-title: #9FB8EA;
-  --diagram-node: #252A32;
-  --diagram-secondary: #2B354B;
-  --diagram-tertiary: #1C1F24;
+  --diagram-node: #202638;
+  --diagram-secondary: #2D2C50;
+  --diagram-tertiary: #162136;
   --overlay: #080B10A6;
   --shadow: 0 12px 32px #00000055;
   --shadow-sm: 0 1px 3px #00000033;
@@ -221,42 +223,17 @@ kbd {
 .brand {
   display: flex;
   align-items: center;
-  gap: 11px;
-  font-family: Georgia,"Times New Roman",serif;
-  font-size: 37px;
-  font-weight: 600;
-  letter-spacing: -2px;
   color: var(--text);
 }
 
-.brand-dot {
-  color: var(--accent);
-}
-
-.brand-icon {
-  position: relative;
+.brand-logo {
   display: block;
-  width: 30px;
-  height: 35px;
+  width: 146px;
+  height: 36px;
 }
-
-.brand-icon>span {
-  position: absolute;
-  left: 2px;
-  bottom: 4px;
-  width: 22px;
-  height: 26px;
-  border-left: 6px solid var(--text);
-  border-bottom: 6px solid var(--text);
-  border-radius: 0 0 0 2px;
-}
-
-.brand-icon>svg {
-  position: absolute;
-  right: -3px;
-  top: 0;
-  color: var(--accent);
-}
+.brand-logo-dark { display: none; }
+:root[data-theme=dark] .brand-logo-light { display: none; }
+:root[data-theme=dark] .brand-logo-dark { display: block; }
 
 .brand-home {
   padding: 0;
@@ -1860,7 +1837,7 @@ kbd {
 
 /* The page is the focal point: quiet typography, generous rhythm, no card around the editor. */
 
-.document-scroll .lume-editor,.document-scroll .markdown-body {
+.document-scroll .neoryn-editor,.document-scroll .markdown-body {
   color: var(--text);
   font-family: Georgia,"Times New Roman",serif;
   font-size: var(--document-font-size);
