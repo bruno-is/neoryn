@@ -153,7 +153,8 @@ export default function App() {
   }, [active?.id, reading, focus])
   function openDoc(id: string) {
     setLibrary(state => state ? { ...state, activeId: id } : state)
-    setOpenTabs(tabs => [...tabs.filter(tab => tab !== id), id].slice(-6)); editor.current = null
+    setOpenTabs(tabs => tabs.includes(id) ? tabs : [...tabs, id].slice(-6))
+    if (id !== active?.id) editor.current = null
     if (window.innerWidth < 760) settings({ sidebarVisible: false })
   }
   function goHome() {
