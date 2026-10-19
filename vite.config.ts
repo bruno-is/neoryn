@@ -10,7 +10,7 @@ export default defineConfig({
     manifest: {
       name: 'Neoryn — Um espaço para suas ideias.', short_name: 'Neoryn',
       description: 'Escreva, organize e desenvolva suas ideias em um ambiente pessoal, sem distrações.',
-      theme_color: '#0F172A', background_color: '#F8F9FC', display: 'standalone',
+      theme_color: '#181A1F', background_color: '#F7F8FA', display: 'standalone',
       id: './', start_url: './', scope: './', lang: 'pt-BR',
       icons: [
         { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },

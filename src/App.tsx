@@ -32,6 +32,7 @@ function IconButton({ label, children, onClick, active = false, disabled = false
 }
 export default function App() {
   const [library, setLibrary] = useState<LibraryState | null>(null)
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
   const [loadError, setLoadError] = useState('')
   const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | 'error'>('saved')
   const [saveError, setSaveError] = useState('')
@@ -98,7 +99,9 @@ export default function App() {
     const theme = library?.settings.theme ?? 'light'
     const media = matchMedia('(prefers-color-scheme: dark)')
     const apply = () => {
-      document.documentElement.dataset.theme = theme === 'system' ? (media.matches ? 'dark' : 'light') : theme
+      const resolved = theme === 'system' ? (media.matches ? 'dark' : 'light') : theme
+      document.documentElement.dataset.theme = resolved
+      setResolvedTheme(resolved)
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--bg').trim())
     }
     apply(); media.addEventListener('change', apply); return () => media.removeEventListener('change', apply)
@@ -349,7 +352,9 @@ export default function App() {
     if (kind === 'md') download(`${fileName(active.name)}.md`, active.content)
     if (kind === 'html') {
       const body = renderToStaticMarkup(<MarkdownView content={active.content} staticExport />)
-      download(`${fileName(active.name)}.html`, `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHTML(active.name)}</title><style>body{max-width:800px;margin:60px auto;padding:24px;color:#27352f;font:18px/1.8 Georgia,serif}h1,h2,h3{line-height:1.25}img,svg{max-width:100%}pre{padding:20px;background:#f2f4f1;overflow:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:10px}blockquote{border-left:3px solid #537e69;margin-left:0;padding-left:24px}a{color:#2c6b53}</style><body>${body}</body></html>`, 'text/html;charset=utf-8')
+      const themeStyles = getComputedStyle(document.documentElement)
+      const palette = ['--paper', '--text', '--code-bg', '--border', '--accent'].map(token => token + ':' + themeStyles.getPropertyValue(token).trim()).join(';')
+      download(`${fileName(active.name)}.html`, `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHTML(active.name)}</title><style>:root{${palette}}body{background:var(--paper);max-width:800px;margin:60px auto;padding:24px;color:var(--text);font:18px/1.8 Georgia,serif}h1,h2,h3{line-height:1.25}img,svg{max-width:100%}pre{padding:20px;background:var(--code-bg);overflow:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid var(--border);padding:10px}blockquote{border-left:3px solid var(--accent);margin-left:0;padding-left:24px}a{color:var(--accent)}</style><body>${body}</body></html>`, 'text/html;charset=utf-8')
     }
     if (kind === 'pdf') { setReading(true); setTimeout(() => window.print(), 500) }
     setMenu(null)
@@ -430,7 +435,7 @@ export default function App() {
     </aside>}
     {sidebar && <button className="mobile-backdrop" aria-label="Fechar biblioteca" onClick={() => settings({ sidebarVisible: false })} />}
     <main className="main-workspace">
-      <header className="topbar"><div className="breadcrumbs">{(!sidebar || focus) && <IconButton label="Abrir biblioteca" onClick={() => { settings({ sidebarVisible: true, focusMode: false }) }}><PanelLeftOpen size={18} /></IconButton>}<span className="desktop-text">Meu espaço</span><ChevronRight size={13} /><span>{currentFolder?.name ?? 'Documentos'}</span><ChevronRight size={13} /><strong>{active ? withoutExtension(active.name) : 'Sua biblioteca'}</strong></div><div className="topbar-actions"><span className={`save-indicator ${saveStatus === 'error' ? 'error' : ''}`}>{saveStatus === 'saving' ? <Clock3 size={14} /> : saveStatus === 'error' ? <HelpCircle size={14} /> : <CheckCheck size={15} />}<span>{saveStatus === 'saving' ? 'Salvando…' : saveStatus === 'error' ? 'Falha ao salvar' : 'Tudo salvo'}</span></span><span className="vertical-divider" /><IconButton label={document.documentElement.dataset.theme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'} onClick={() => settings({ theme: document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark' })}>{document.documentElement.dataset.theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</IconButton><button className={`reading-button ${reading ? 'active' : ''}`} disabled={!active} onClick={() => setReading(value => !value)}>{reading ? <ArrowLeft size={16} /> : <Eye size={16} />}<span>{reading ? 'Voltar à edição' : 'Modo leitura'}</span></button></div></header>
+      <header className="topbar"><div className="breadcrumbs">{(!sidebar || focus) && <IconButton label="Abrir biblioteca" onClick={() => { settings({ sidebarVisible: true, focusMode: false }) }}><PanelLeftOpen size={18} /></IconButton>}<span className="desktop-text">Meu espaço</span><ChevronRight size={13} /><span>{currentFolder?.name ?? 'Documentos'}</span><ChevronRight size={13} /><strong>{active ? withoutExtension(active.name) : 'Sua biblioteca'}</strong></div><div className="topbar-actions"><span className={`save-indicator ${saveStatus === 'error' ? 'error' : ''}`}>{saveStatus === 'saving' ? <Clock3 size={14} /> : saveStatus === 'error' ? <HelpCircle size={14} /> : <CheckCheck size={15} />}<span>{saveStatus === 'saving' ? 'Salvando…' : saveStatus === 'error' ? 'Falha ao salvar' : 'Tudo salvo'}</span></span><span className="vertical-divider" /><IconButton label={resolvedTheme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'} onClick={() => settings({ theme: resolvedTheme === 'dark' ? 'light' : 'dark' })}>{resolvedTheme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</IconButton><button className={`reading-button ${reading ? 'active' : ''}`} disabled={!active} onClick={() => setReading(value => !value)}>{reading ? <ArrowLeft size={16} /> : <Eye size={16} />}<span>{reading ? 'Voltar à edição' : 'Modo leitura'}</span></button></div></header>
       {otherTab && <div className="warning-banner">Esta biblioteca está aberta em outra aba. Para editar aqui, feche a outra aba e <button onClick={() => location.reload()}>recarregue</button>.</div>}
       {saveStatus === 'error' && <div className="warning-banner" role="alert">{saveError} <button onClick={() => download('neoryn-backup.json', exportBackup(library), 'application/json')}>Baixar backup agora</button></div>}
       {!reading && !focus && <div className="document-tabs"><div className="tabs-scroll">{openTabs.map(id => documents.find(d => d.id === id)).filter((doc): doc is DocumentRecord => !!doc).map(doc => <div key={doc.id} className={`document-tab ${doc.id === active?.id ? 'active' : ''}`}><button onClick={() => openDoc(doc.id)}><FileText size={14} /><span>{withoutExtension(doc.name)}<small>.md</small></span></button><button className="tab-close" aria-label={`Fechar aba ${doc.name}`} onClick={() => closeDoc(doc.id)}><X size={12} /></button></div>)}</div><IconButton label="Criar documento" onClick={() => showModal('new-doc')}><Plus size={17} /></IconButton><div className="tabs-spacer" /><span className="workspace-caption">UM POUCO DE CLAREZA, TODOS OS DIAS.</span></div>}

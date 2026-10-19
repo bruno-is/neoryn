@@ -7,6 +7,8 @@
 
 **Um espaço para suas ideias.**
 
+Identidade **Graphite Blue**: grafite fosco, superfícies neutras e azul como destaque, com temas claro, escuro e automático.
+
 Escreva, organize e desenvolva suas ideias em um ambiente pessoal, sem distrações. Um espaço para escrever, ler, pensar e criar, com Markdown, armazenamento local e acesso offline após o primeiro carregamento completo.
 
 [Abrir Neoryn](https://bruno-is.github.io/neoryn/) · [Código-fonte](https://github.com/bruno-is/neoryn) · [Identidade e compatibilidade](docs/BRAND.md)

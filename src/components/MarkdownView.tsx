@@ -79,6 +79,7 @@ function MermaidBlock({ source }: { source: string }) {
         flowchart: { htmlLabels: false, curve: 'basis' },
         themeVariables: {
           darkMode: theme === 'dark',
+          useGradient: false,
           dropShadow: 'none',
           nodeShadow: false,
           background: color('--code-bg'),

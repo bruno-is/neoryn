@@ -7,31 +7,31 @@
   font-weight: 400;
   color: var(--text);
   background: var(--bg);
-  --brand-primary: #7C6CFF;
-  --brand-secondary: #60A5FA;
+  --brand-primary: #3B82F6;
+  --brand-secondary: #93C5FD;
   --font-ui: Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --font-editor: Georgia,"Times New Roman",serif;
   --font-code: "JetBrains Mono","SFMono-Regular",Consolas,monospace;
-  --bg: #F8F9FC;
+  --bg: #F7F8FA;
   --paper: #FFFFFF;
-  --sidebar: #F1F3F8;
-  --subtle: #F0F2F8;
-  --hover: #E9ECF5;
-  --selection: #ECE9FC;
-  --border: #DFE3ED;
-  --text: #202638;
-  --muted: #626B7E;
-  --accent: #6250CE;
-  --accent-strong: #5140B5;
+  --sidebar: #F0F2F5;
+  --subtle: #F1F3F6;
+  --hover: #E6ECF3;
+  --selection: #E7F0FF;
+  --border: #D9E0E9;
+  --text: #1E2430;
+  --muted: #586475;
+  --accent: #1D5EC9;
+  --accent-strong: #1D4ED8;
   --on-accent: #FFFFFF;
-  --text-secondary: #505867;
-  --control-border: #8792A4;
-  --surface: var(--subtle);
+  --text-secondary: #4D5969;
+  --control-border: #7B8796;
+  --surface: #FFFFFF;
   --surface-raised: var(--paper);
   --accent-soft: var(--selection);
-  --code-inline-bg: #EDF0F5;
-  --code-inline-text: #6250CE;
-  --code-bg: #F3F5F8;
+  --code-inline-bg: #EEF1F5;
+  --code-inline-text: #1D5EC9;
+  --code-bg: #F1F3F6;
   --quote-bg: var(--subtle);
   --selection-text: var(--text);
   --focus: var(--accent);
@@ -43,44 +43,45 @@
   --danger-fill: #A33744;
   --on-danger: #FFFFFF;
   --favorite: #8A641C;
-  --syntax-comment: #626C7D;
-  --syntax-keyword: #76519E;
+  --syntax-comment: #586475;
+  --syntax-keyword: #1D5EC9;
   --syntax-string: #286C68;
   --syntax-number: #92551F;
-  --syntax-title: #4769A6;
+  --syntax-title: #315E8C;
   --syntax-variable: var(--text);
   --syntax-punctuation: var(--text-secondary);
-  --diagram-node: #E9ECF5;
-  --diagram-secondary: #ECE9FC;
-  --diagram-tertiary: #F3F5F8;
-  --overlay: #10141C66;
-  --shadow: 0 12px 32px #1118271A;
-  --shadow-sm: 0 1px 3px #1118270A;
-  --modal-shadow: 0 20px 60px #11182726;
-  --sidebar-shadow: 12px 0 40px #11182726;
+  --diagram-node: #E6ECF3;
+  --diagram-secondary: #EDF1F6;
+  --diagram-tertiary: #F1F3F6;
+  --overlay: #12141866;
+  --shadow: 0 12px 32px #1214181A;
+  --shadow-sm: 0 1px 3px #1214180A;
+  --modal-shadow: 0 20px 60px #12141826;
+  --sidebar-shadow: 12px 0 40px #12141826;
   --document-font-size: 17px;
 }
 
 :root[data-theme=dark] {
   color-scheme: dark;
-  --bg: #0F172A;
-  --paper: #0F172A;
-  --sidebar: #0C1425;
-  --subtle: #162136;
-  --hover: #202638;
-  --selection: #2D2C50;
-  --border: #2A374E;
-  --text: #E5E7EB;
-  --muted: #A6B2C8;
-  --accent: #ADA2FF;
-  --accent-strong: #C5BDFF;
-  --on-accent: #0F172A;
-  --text-secondary: #BFC5CF;
-  --control-border: #6E7889;
-  --surface-raised: #1B2940;
-  --code-inline-bg: #202638;
-  --code-inline-text: #C5BDFF;
-  --code-bg: #162136;
+  --bg: #181A1F;
+  --paper: #181A1F;
+  --sidebar: #121418;
+  --subtle: #202329;
+  --hover: #2A2E36;
+  --selection: #203651;
+  --border: #333840;
+  --text: #ECEFF4;
+  --muted: #A1AAB8;
+  --accent: #77B6FF;
+  --accent-strong: #91C5FF;
+  --on-accent: #181A1F;
+  --text-secondary: #BCC4D0;
+  --control-border: #737F91;
+  --surface: #252A31;
+  --surface-raised: #252A31;
+  --code-inline-bg: #252A31;
+  --code-inline-text: #91C5FF;
+  --code-bg: #202329;
   --success: #91BAA0;
   --warning: #DFBC79;
   --warning-bg: #30291D;
@@ -88,15 +89,15 @@
   --danger-bg: #322125;
   --danger-fill: #A33744;
   --favorite: #CFAC6A;
-  --syntax-comment: #9AA4B4;
-  --syntax-keyword: #C1ADE6;
+  --syntax-comment: #A1AAB8;
+  --syntax-keyword: #77B6FF;
   --syntax-string: #8CBFBA;
   --syntax-number: #D8B07E;
-  --syntax-title: #9FB8EA;
-  --diagram-node: #202638;
-  --diagram-secondary: #2D2C50;
-  --diagram-tertiary: #162136;
-  --overlay: #080B10A6;
+  --syntax-title: #A9C8EA;
+  --diagram-node: #252A31;
+  --diagram-secondary: #2A2E36;
+  --diagram-tertiary: #202329;
+  --overlay: #08090BA6;
   --shadow: 0 12px 32px #00000055;
   --shadow-sm: 0 1px 3px #00000033;
   --modal-shadow: 0 20px 60px #00000077;
@@ -775,7 +776,7 @@ kbd {
   align-items: center;
   gap: 7px;
   background: var(--accent-strong);
-  color: var(--paper);
+  color: var(--on-accent);
   height: 33px;
   padding: 0 13px;
   border-radius: 6px;
@@ -2342,4 +2343,19 @@ kbd {
 .source-editor:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 6px;
+}
+
+/* Field boundaries carry meaning; decorative dividers stay quiet. */
+.search-trigger,
+.search-input-wrap,
+.modal form>input,
+.modal form>select,
+.setting-row>select,
+.find-bar>input {
+  border-color: var(--control-border);
+}
+
+.search-input-wrap:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }

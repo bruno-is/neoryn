@@ -16,6 +16,9 @@ test('production build works under a repository path and after going offline', a
     return (await fetch(href)).json()
   })
   expect(manifest.short_name).toBe('Neoryn')
+  expect(manifest.theme_color).toBe('#181A1F')
+  expect(manifest.background_color).toBe('#F7F8FA')
+  expect(manifest.id).toBe('./')
   expect(manifest.scope).toBe('./')
   expect(manifest.start_url).toBe('./')
   expect(manifest.icons.map((icon: { sizes: string }) => icon.sizes)).toEqual(['any', '192x192', '512x512', '512x512'])
@@ -34,11 +37,29 @@ test('production build works under a repository path and after going offline', a
       const response = await fetch(path)
       if (path.endsWith('.png')) {
         const bitmap = await createImageBitmap(await response.blob())
-        return { path, ok: response.ok, size: bitmap.width }
+        const canvas = document.createElement('canvas')
+        canvas.width = canvas.height = bitmap.width
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(bitmap, 0, 0)
+        const corner = Array.from(ctx.getImageData(0, 0, 1, 1).data)
+        const blue = Array.from(ctx.getImageData(Math.round(bitmap.width * .28), Math.round(bitmap.width * .48), 1, 1).data)
+        return { path, ok: response.ok, size: bitmap.width, corner, blue }
       }
-      return { path, ok: response.ok }
+      return { path, ok: response.ok, svg: await response.text() }
     }))
   })
   for (const asset of assets) expect(asset.ok, asset.path).toBe(true)
   expect(assets.filter(asset => asset.size).map(asset => asset.size)).toEqual([192, 512, 512, 180])
+  for (const asset of assets) {
+    if (asset.svg) {
+      expect(asset.svg).toContain('stop-color="#3B82F6"')
+      expect(asset.svg).toContain('stop-color="#93C5FD"')
+      expect(asset.svg).not.toMatch(/#7C6CFF|#60A5FA|#0F172A/i)
+    }
+    if (asset.corner) {
+      expect(asset.corner).toEqual(asset.path.includes('/icon-') ? [0, 0, 0, 0] : [24, 26, 31, 255])
+      expect(asset.blue![2]).toBeGreaterThan(asset.blue![0])
+      expect(asset.blue![1]).toBeGreaterThan(asset.blue![0])
+    }
+  }
 })
