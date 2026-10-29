@@ -23,6 +23,7 @@ Escreva, organize e desenvolva suas ideias em um ambiente pessoal, sem distraç�
 - **Modo leitura pelo ícone de olho**, modo foco, temas claro/escuro/sistema e ajuste de fonte.
 - Importação de `.md`, `.markdown` e `.txt`, múltiplos arquivos, arrastar e soltar e importação de pastas. Ao selecionar uma pasta, sua raiz e toda a hierarquia de subpastas são recriadas na biblioteca.
 - Biblioteca persistente com pastas e subpastas, renomeação, movimentação, duplicação, favoritos, recentes e lixeira recuperável.
+- Ao remover uma pasta, escolha entre manter seus documentos em DOCUMENTOS ou movê-los para a lixeira, incluindo os das subpastas. A última escolha confirmada fica salva como padrão para as próximas exclusões; cancelar não altera a preferência.
 - Busca por nome/conteúdo, localizar e substituir, abas de documentos e sumário clicável.
 - Títulos, listas, tarefas, tabelas, citações, links, imagens, código com destaque, fórmulas KaTeX e diagramas Mermaid na leitura.
 - Metadados YAML preservados; edição desses metadados no modo Markdown.

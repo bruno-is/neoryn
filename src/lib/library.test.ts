@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { canMoveFolder, getFolderDescendants, parseOutline, uniqueName, validateLibrary } from './library'
+import { canMoveFolder, getFolderDescendants, parseOutline, removeFolder, uniqueName, validateLibrary } from './library'
 import { createSeedLibrary } from './seed'
 import { createLegacySeedLibrary } from './legacySeed'
 import { migrateBrandContent, migrateStarterContent } from './starterContent'
@@ -25,6 +25,62 @@ beforeEach(async () => {
 })
 
 afterEach(() => { vi.unstubAllGlobals() })
+
+describe('folder deletion', () => {
+  function nestedLibrary() {
+    const state = createPopulatedLibrary(100)
+    state.folders.push({ id: 'child', name: 'Filha', parentId: 'pessoal', createdAt: 100 })
+    state.documents.push(
+      { ...state.documents[1], id: 'nested', folderId: 'child', favorite: true },
+      { ...state.documents[1], id: 'trashed', folderId: 'child', deletedAt: 150 },
+    )
+    state.activeId = 'nested'
+    state.openTabIds = ['welcome', 'nested']
+    return state
+  }
+
+  it('keeps nested documents, their contents and existing trash while removing only the chosen tree', () => {
+    const state = nestedLibrary()
+    const result = removeFolder(state, 'pessoal', 'keep', 200)
+    expect(result.folders.map(folder => folder.id)).toEqual(['projetos', 'referencias'])
+    expect(result.documents).toEqual(state.documents.map(doc => ['pessoal', 'child'].includes(doc.folderId ?? '') ? { ...doc, folderId: null } : doc))
+    expect(result.settings.folderDeletionMode).toBe('keep')
+    expect(validateLibrary(result)).toEqual(result)
+    expect(state.folders).toHaveLength(4)
+  })
+
+  it('trashes only live documents in the tree and persists the choice with valid active tabs and backups', async () => {
+    const state = nestedLibrary()
+    const result = removeFolder(state, 'pessoal', 'trash', 200)
+    expect(result.documents).toEqual(state.documents.map(doc => ['pessoal', 'child'].includes(doc.folderId ?? '')
+      ? { ...doc, folderId: null, ...(doc.deletedAt === null ? { deletedAt: 200, updatedAt: 200 } : {}) }
+      : doc))
+    expect(result.activeId).toBe('nested')
+    expect(result.openTabIds).toEqual(['welcome', 'nested'])
+    expect(result.settings.folderDeletionMode).toBe('trash')
+    await saveLibrary(result)
+    expect(await loadLibrary()).toEqual(result)
+    expect(importBackup(exportBackup(result))).toEqual(result)
+  })
+
+  it('removes an empty folder and can switch the saved choice back to keep', () => {
+    const state = nestedLibrary()
+    state.settings.folderDeletionMode = 'trash'
+    const result = removeFolder(state, 'projetos', 'keep', 200)
+    expect(result.documents).toEqual(state.documents)
+    expect(result.settings.folderDeletionMode).toBe('keep')
+    expect(result.folders.some(folder => folder.id === 'projetos')).toBe(false)
+    expect(removeFolder(state, 'missing', 'keep')).toBe(state)
+  })
+
+  it('defaults old libraries and backups to keep and rejects invalid choices', () => {
+    const old = JSON.parse(exportBackup(createPopulatedLibrary(100)))
+    delete old.library.settings.folderDeletionMode
+    expect(importBackup(JSON.stringify(old)).settings.folderDeletionMode).toBe('keep')
+    old.library.settings.folderDeletionMode = 'unexpected'
+    expect(() => importBackup(JSON.stringify(old))).toThrow('opção de exclusão de pastas')
+  })
+})
 
 describe('starter content', () => {
   it('starts with one introduction at the root and no folders', async () => {

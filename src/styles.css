@@ -1515,6 +1515,10 @@ kbd {
   margin-top: 27px;
 }
 
+#folder-deletion-mode {
+  margin-bottom: 16px;
+}
+
 .danger-button {
   background: var(--danger-fill);
   border-color: var(--danger-fill);

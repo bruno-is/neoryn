@@ -29,6 +29,7 @@ export interface LibraryState {
     editorMode: 'live' | 'source' | 'split'
     focusMode: boolean
     sidebarVisible: boolean
+    folderDeletionMode: 'keep' | 'trash'
   }
 }
 
@@ -46,6 +47,7 @@ export const DEFAULT_SETTINGS: LibraryState['settings'] = {
   editorMode: 'live',
   focusMode: false,
   sidebarVisible: true,
+  folderDeletionMode: 'keep',
 }
 
 export const LIBRARY_LIMITS = {
@@ -182,6 +184,9 @@ export function validateLibrary(value: unknown): LibraryState {
   const existingTabs = [...new Set(savedTabs)].filter(id => documentIds.has(id)).slice(-6)
   const openTabIds = activeId ? openDocumentTab(existingTabs, activeId) : existingTabs
   const settings = record(source.settings, 'Preferências')
+  if (settings.folderDeletionMode !== undefined && settings.folderDeletionMode !== 'keep' && settings.folderDeletionMode !== 'trash') {
+    invalid('A opção de exclusão de pastas é inválida.')
+  }
   if (settings.theme !== 'light' && settings.theme !== 'dark' && settings.theme !== 'system') invalid('O tema selecionado é inválido.')
   if (settings.editorMode !== 'live' && settings.editorMode !== 'source' && settings.editorMode !== 'split') invalid('O modo do editor é inválido.')
   if (typeof settings.fontSize !== 'number' || !Number.isFinite(settings.fontSize) || settings.fontSize < 12 || settings.fontSize > 32) {
@@ -199,6 +204,7 @@ export function validateLibrary(value: unknown): LibraryState {
       editorMode: settings.editorMode as LibraryState['settings']['editorMode'],
       focusMode: boolean(settings.focusMode, 'Modo foco'),
       sidebarVisible: boolean(settings.sidebarVisible, 'Barra lateral'),
+      folderDeletionMode: settings.folderDeletionMode ?? DEFAULT_SETTINGS.folderDeletionMode,
     },
   }
 }
@@ -228,6 +234,20 @@ export function canMoveFolder(folders: FolderRecord[], folderId: string, targetP
   if (targetParentId === null) return true
   if (!folders.some(folder => folder.id === targetParentId)) return false
   return !getFolderDescendants(folders, folderId).has(targetParentId)
+}
+
+/** Remove a folder tree and remember the confirmed choice in the same snapshot. */
+export function removeFolder(state: LibraryState, folderId: string, mode: LibraryState['settings']['folderDeletionMode'], now = Date.now()): LibraryState {
+  if (!state.folders.some(folder => folder.id === folderId)) return state
+  const ids = getFolderDescendants(state.folders, folderId)
+  return {
+    ...state,
+    folders: state.folders.filter(folder => !ids.has(folder.id)),
+    documents: state.documents.map(doc => doc.folderId && ids.has(doc.folderId)
+      ? { ...doc, folderId: null, ...(mode === 'trash' && doc.deletedAt === null ? { deletedAt: now, updatedAt: Math.max(now, doc.updatedAt) } : {}) }
+      : doc),
+    settings: { ...state.settings, folderDeletionMode: mode },
+  }
 }
 
 export function uniqueName(desired: string, existingNames: Iterable<string>): string {

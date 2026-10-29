@@ -120,8 +120,8 @@ test('identity is legible in both themes, follows preferences and fits mobile', 
     for (const value of contrast) expect(value.ratio, `${theme}: ${value.pair}`).toBeGreaterThanOrEqual(value.minimum)
     for (const selector of ['.new-document', '.reading-button']) {
       const button = page.locator(selector)
-      const colors = await button.evaluate(element => ({ color: getComputedStyle(element).color, background: getComputedStyle(element).backgroundColor }))
-      expect(colors).toEqual(theme === 'light' ? { color: 'rgb(255, 255, 255)', background: 'rgb(29, 78, 216)' } : { color: 'rgb(24, 26, 31)', background: 'rgb(145, 197, 255)' })
+      await expect.poll(() => button.evaluate(element => ({ color: getComputedStyle(element).color, background: getComputedStyle(element).backgroundColor })))
+        .toEqual(theme === 'light' ? { color: 'rgb(255, 255, 255)', background: 'rgb(29, 78, 216)' } : { color: 'rgb(24, 26, 31)', background: 'rgb(145, 197, 255)' })
     }
     if (process.env.NEORYN_CAPTURE) await page.screenshot({ path: theme === 'light' ? 'docs/preview.png' : 'docs/preview-dark.png' })
   }
