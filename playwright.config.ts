@@ -15,7 +15,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: process.env.CI ? [
-    { command: 'npm run dev -- --port 4174', url: 'http://127.0.0.1:4174', reuseExistingServer: false },
+    { command: 'npm run dev -- --port 4174', url: 'http://127.0.0.1:4174', reuseExistingServer: false, env: { VITE_GOOGLE_CLIENT_ID: 'test.apps.googleusercontent.com', VITE_GOOGLE_API_KEY: 'test-picker-key', VITE_GOOGLE_APP_ID: '123456' } },
     ...(process.env.NEORYN_PRODUCTION_TEST ? [{ command: 'npm run preview:pages', url: 'http://127.0.0.1:4175/neoryn/', reuseExistingServer: false }] : []),
   ] : undefined,
 })

@@ -1,4 +1,5 @@
 export interface DocumentRecord {
+  drive?: { account: string; fileId: string; base: string; pending?: boolean }
   id: string
   name: string
   content: string
@@ -164,6 +165,7 @@ export function validateLibrary(value: unknown): LibraryState {
     return {
       id,
       name: name(document.name, 'Documento'),
+      ...(document.drive === undefined ? {} : { drive: validateDriveLink(document.drive) }),
       content: document.content,
       folderId,
       favorite: boolean(document.favorite, 'Favorito'),
@@ -172,6 +174,13 @@ export function validateLibrary(value: unknown): LibraryState {
       deletedAt,
     }
   })
+  const driveIds = new Set<string>()
+  for (const document of documents) {
+    if (!document.drive) continue
+    const key = `${document.drive.account}\u0000${document.drive.fileId}`
+    if (driveIds.has(key)) invalid('Dois documentos não podem sincronizar com o mesmo arquivo do Drive.')
+    driveIds.add(key)
+  }
   const activeId = nullableId(source.activeId, 'Documento aberto')
   if (activeId !== null && !documents.some(document => document.id === activeId)) {
     invalid('O documento aberto não foi encontrado na biblioteca.')
@@ -207,6 +216,13 @@ export function validateLibrary(value: unknown): LibraryState {
       folderDeletionMode: settings.folderDeletionMode ?? DEFAULT_SETTINGS.folderDeletionMode,
     },
   }
+}
+
+function validateDriveLink(value: unknown): NonNullable<DocumentRecord['drive']> {
+  const link = record(value, 'Vínculo do Drive')
+  const base = link.base
+  if (typeof base !== 'string' || (base !== '' && !/^[a-f0-9]{64}$/.test(base))) invalid('A versão do Drive é inválida.')
+  return { account: identifier(link.account, 'Conta do Drive'), fileId: identifier(link.fileId, 'Arquivo do Drive'), base, ...(link.pending === true ? { pending: true } : {}) }
 }
 
 /** Includes the requested folder. Traversal remains safe even with cyclic input. */
