@@ -75,6 +75,8 @@ describe('persisted Drive links', () => {
   it('preserves links through validation without including tokens and accepts legacy documents', () => {
     const library = createSeedLibrary(100)
     expect(validateLibrary(library).documents[0].drive).toBeUndefined()
+    library.documents[0].localOnly = true
+    expect(validateLibrary(library).documents[0].localOnly).toBe(true)
     library.documents[0].drive = { account: 'account-a', fileId: 'file-a', base: 'a'.repeat(64) }
     expect(validateLibrary(library).documents[0].drive).toEqual(library.documents[0].drive)
     library.documents.push({ ...library.documents[0], id: 'duplicate-link' })

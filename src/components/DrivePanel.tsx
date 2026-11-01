@@ -71,11 +71,11 @@ export function DrivePanel({ library, getLibrary, commit, disabled }: Props) {
     localStorage.setItem(preferencesKey(current.account.id), JSON.stringify(value))
     refs.current.preferences = value; setPreferences(value)
   }
-  async function run(work: () => Promise<void>) {
+  async function run(work: () => Promise<void>, network = true) {
     if (lock.current || refs.current.disabled) return
     lock.current = true; setBusy(true); setError('')
     try {
-      if (!navigator.onLine) throw new Error('Você está offline. As alterações permanecem salvas neste navegador.')
+      if (network && !navigator.onLine) throw new Error('Você está offline. As alterações permanecem salvas neste navegador.')
       await work()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível concluir a operação.')
@@ -113,7 +113,7 @@ export function DrivePanel({ library, getLibrary, commit, disabled }: Props) {
     const remote = await client.read(id)
     const base = await fingerprint(remote)
     const now = Date.now()
-    const doc: DocumentRecord = { id: crypto.randomUUID(), name: remote.name, content: remote.content, createdAt: now, updatedAt: now, deletedAt: null, folderId: null, favorite: false,
+    const doc: DocumentRecord = { id: crypto.randomUUID(), name: remote.name, content: remote.content, createdAt: now, updatedAt: now, deletedAt: null, folderId: null, favorite: false, ...(copy ? { localOnly: true } : {}),
       ...(!copy ? { drive: { account: account.id, fileId: id, base } } : {}) }
     await refs.current.commit(state => ({ ...state, documents: [...state.documents, doc] }))
     savePreferences({ ...refs.current.preferences, excluded: copy ? [...refs.current.preferences.excluded, doc.id] : refs.current.preferences.excluded, ignored: copy ? [...refs.current.preferences.ignored, id] : refs.current.preferences.ignored.filter(fileId => fileId !== id) })
@@ -166,7 +166,7 @@ export function DrivePanel({ library, getLibrary, commit, disabled }: Props) {
     const prefs = refs.current.preferences
     const failures: string[] = []
     for (const doc of refs.current.getLibrary().documents) {
-      if (doc.deletedAt || refs.current.preferences.excluded.includes(doc.id)) continue
+      if (doc.deletedAt || (doc.localOnly && !doc.drive) || refs.current.preferences.excluded.includes(doc.id)) continue
       try {
         if (doc.drive?.account === account.id) {
           if (doc.drive.pending && (manual || prefs.autosave)) await send(doc)
@@ -218,7 +218,7 @@ export function DrivePanel({ library, getLibrary, commit, disabled }: Props) {
     const remote = await client.read(doc.drive.fileId)
     const now = Date.now()
     // Every resolution keeps the displaced content as an independent local document.
-    const copy: DocumentRecord = { ...doc, id: crypto.randomUUID(), drive: undefined, name: `${choice === 'local' ? remote.name : doc.name} (${choice === 'local' ? 'versão do Drive' : 'cópia local'})`.slice(0, 180), content: choice === 'local' ? remote.content : doc.content, createdAt: now, updatedAt: now }
+    const copy: DocumentRecord = { ...doc, id: crypto.randomUUID(), drive: undefined, localOnly: true, name: `${choice === 'local' ? remote.name : doc.name} (${choice === 'local' ? 'versão do Drive' : 'cópia local'})`.slice(0, 180), content: choice === 'local' ? remote.content : doc.content, createdAt: now, updatedAt: now }
     savePreferences({ ...refs.current.preferences, excluded: [...refs.current.preferences.excluded, copy.id] })
     await refs.current.commit(state => ({ ...state, documents: [...state.documents, copy] }))
     if (choice === 'local') {
@@ -256,11 +256,11 @@ export function DrivePanel({ library, getLibrary, commit, disabled }: Props) {
             <div className="drive-documents">{library.documents.map(doc => {
               const belongs = doc.drive?.account === session.account.id
               return <div className="drive-document" key={doc.id}><label><input type="checkbox" aria-label={`Enviar ${doc.name}`} disabled={busy || !!doc.deletedAt || (!!doc.drive && !belongs)} checked={selected.includes(doc.id)} onChange={event => setSelected(ids => event.target.checked ? [...ids, doc.id] : ids.filter(id => id !== doc.id))} /><span><strong>{doc.name}</strong><small>{doc.deletedAt ? 'Na lixeira local' : belongs ? pendingIds.includes(doc.id) ? 'Alterações pendentes de envio' : 'Sincronizado com o Drive' : doc.drive ? 'Vinculado a outra conta' : 'Somente neste navegador'}</small></span></label>
-                <div className="drive-actions">{belongs && <><button disabled={busy} onClick={() => void run(async () => { savePreferences({ ...refs.current.preferences, excluded: [...refs.current.preferences.excluded, doc.id], ignored: [...refs.current.preferences.ignored, doc.drive!.fileId] }); await patch(doc, { drive: undefined }) })}>Somente local</button><button disabled={busy} onClick={() => setConfirmTrash(doc.id)}>Lixeira do Drive</button></>}{!doc.drive && <label className="drive-local"><input type="checkbox" aria-label={`Manter ${doc.name} somente local`} checked={preferences.excluded.includes(doc.id)} disabled={busy} onChange={event => { try { savePreferences({ ...refs.current.preferences, excluded: event.target.checked ? [...refs.current.preferences.excluded, doc.id] : refs.current.preferences.excluded.filter(id => id !== doc.id) }) } catch { setError('Não foi possível salvar a preferência.') } }} />Manter local</label>}</div>
+                <div className="drive-actions">{belongs && <><button disabled={busy} onClick={() => void run(async () => { savePreferences({ ...refs.current.preferences, excluded: [...refs.current.preferences.excluded, doc.id], ignored: [...refs.current.preferences.ignored, doc.drive!.fileId] }); await patch(doc, { drive: undefined, localOnly: true }) }, false)}>Somente local</button><button disabled={busy} onClick={() => setConfirmTrash(doc.id)}>Lixeira do Drive</button></>}{!doc.drive && <label className="drive-local"><input type="checkbox" aria-label={`Manter ${doc.name} somente local`} checked={!!doc.localOnly || preferences.excluded.includes(doc.id)} disabled={busy} onChange={event => { const checked = event.target.checked; void run(async () => { savePreferences({ ...refs.current.preferences, excluded: checked ? [...refs.current.preferences.excluded, doc.id] : refs.current.preferences.excluded.filter(id => id !== doc.id) }); await patch(doc, { localOnly: checked }) }, false) }} />Manter local</label>}</div>
               </div>
             })}</div>
-            {confirmTrash && <div className="drive-notice"><strong>Mover “{library.documents.find(doc => doc.id === confirmTrash)?.name}” para a lixeira do Drive?</strong><p>A cópia local será mantida e desvinculada.</p><div className="drive-actions"><button disabled={busy} onClick={() => setConfirmTrash(null)}>Cancelar</button><button className="danger" disabled={busy} onClick={() => void run(async () => { const doc = refs.current.getLibrary().documents.find(item => item.id === confirmTrash); if (!doc?.drive || doc.drive.account !== requireSession().account.id) return; const file = await requireSession().client.metadata(doc.drive.fileId); await requireSession().client.trash(file); savePreferences({ ...refs.current.preferences, excluded: [...refs.current.preferences.excluded, doc.id], ignored: [...refs.current.preferences.ignored, doc.drive.fileId] }); await patch(doc, { drive: undefined }); setConfirmTrash(null) })}>Confirmar envio à lixeira</button></div></div>}
-            <button className="secondary-button" disabled={busy || disabled || !selected.length} onClick={() => void run(async () => { for (const id of selected) { const doc = refs.current.getLibrary().documents.find(item => item.id === id); if (doc && !doc.deletedAt) { await send(doc); savePreferences({ ...refs.current.preferences, excluded: refs.current.preferences.excluded.filter(value => value !== id) }) } } setSelected([]); setMessage('Documentos enviados. Confira eventuais conflitos acima.') })}><Upload size={16} />Enviar selecionados ({selected.length})</button>
+            {confirmTrash && <div className="drive-notice"><strong>Mover “{library.documents.find(doc => doc.id === confirmTrash)?.name}” para a lixeira do Drive?</strong><p>A cópia local será mantida e desvinculada.</p><div className="drive-actions"><button disabled={busy} onClick={() => setConfirmTrash(null)}>Cancelar</button><button className="danger" disabled={busy} onClick={() => void run(async () => { const doc = refs.current.getLibrary().documents.find(item => item.id === confirmTrash); if (!doc?.drive || doc.drive.account !== requireSession().account.id) return; const file = await requireSession().client.metadata(doc.drive.fileId); await requireSession().client.trash(file); savePreferences({ ...refs.current.preferences, excluded: [...refs.current.preferences.excluded, doc.id], ignored: [...refs.current.preferences.ignored, doc.drive.fileId] }); await patch(doc, { drive: undefined, localOnly: true }); setConfirmTrash(null) })}>Confirmar envio à lixeira</button></div></div>}
+            <button className="secondary-button" disabled={busy || disabled || !selected.length} onClick={() => void run(async () => { for (const id of selected) { const doc = refs.current.getLibrary().documents.find(item => item.id === id); if (doc && !doc.deletedAt) { await send(doc); const sent = refs.current.getLibrary().documents.find(item => item.id === id); if (sent?.localOnly) await patch(sent, { localOnly: false }); savePreferences({ ...refs.current.preferences, excluded: refs.current.preferences.excluded.filter(value => value !== id) }) } } setSelected([]); setMessage('Documentos enviados. Confira eventuais conflitos acima.') })}><Upload size={16} />Enviar selecionados ({selected.length})</button>
             {!activeDocs.length && <p>Crie ou importe um documento para começar.</p>}
           </section>
         </>}

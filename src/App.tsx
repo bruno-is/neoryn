@@ -320,7 +320,7 @@ export default function App() {
       const folderMap = new Map(imported.folders.map(folder => [folder.id, uid()]))
       const importedFolders = imported.folders.map(folder => ({ ...folder, id: folderMap.get(folder.id)!, parentId: folder.parentId ? folderMap.get(folder.parentId)! : null }))
       const documentMap = new Map(imported.documents.map(doc => [doc.id, uid()]))
-      const importedDocs = imported.documents.map(doc => ({ ...doc, drive: undefined, id: documentMap.get(doc.id)!, folderId: doc.folderId ? folderMap.get(doc.folderId)! : null }))
+      const importedDocs = imported.documents.map(doc => ({ ...doc, drive: undefined, localOnly: true, id: documentMap.get(doc.id)!, folderId: doc.folderId ? folderMap.get(doc.folderId)! : null }))
       if (!library) {
         const recovered = { ...imported, documents: importedDocs, folders: importedFolders, activeId: imported.activeId ? documentMap.get(imported.activeId)! : null, openTabIds: imported.openTabIds.map(id => documentMap.get(id)!) }
         await restoreLibrary(recovered); readyToSave.current = true; setLibrary(recovered); setLoadError('')

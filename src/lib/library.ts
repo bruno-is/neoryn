@@ -1,5 +1,6 @@
 export interface DocumentRecord {
   drive?: { account: string; fileId: string; base: string; pending?: boolean }
+  localOnly?: boolean
   id: string
   name: string
   content: string
@@ -166,6 +167,7 @@ export function validateLibrary(value: unknown): LibraryState {
       id,
       name: name(document.name, 'Documento'),
       ...(document.drive === undefined ? {} : { drive: validateDriveLink(document.drive) }),
+      ...(document.localOnly === undefined ? {} : { localOnly: boolean(document.localOnly, 'Documento somente local') }),
       content: document.content,
       folderId,
       favorite: boolean(document.favorite, 'Favorito'),
