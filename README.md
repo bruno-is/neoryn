@@ -137,3 +137,10 @@ Os testes cobrem contraste dos tokens, identidade em ambos os temas, recuperaç�
 - `.github/workflows/deploy.yml`: publicação automática.
 
 Construído com React, TypeScript, Vite, Milkdown, React Markdown, KaTeX, Mermaid e Lucide. Consulte [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) para as bibliotecas principais.
+
+
+### Google Drive
+
+O painel **Google Drive** oferece importação seletiva de Markdown, cópias independentes, envio manual, autosave configurável, descoberta de arquivos autorizados, sincronização durante o uso, resolução de conflitos com cópia de recuperação e lixeira remota com confirmação. As preferências são mantidas por conta neste navegador. O salvamento local permanece ativo.
+
+A ativação exige um projeto Google Cloud com Drive API, Picker API e cliente OAuth Web. Veja [DRIVE_SETUP.md](DRIVE_SETUP.md) para configurar as três variáveis públicas do build, as restrições da chave, a publicação OAuth e a validação com conta real. Sem configuração, a interface informa que a conexão está aguardando ativação.
